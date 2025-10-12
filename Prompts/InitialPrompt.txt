@@ -1,0 +1,73 @@
+Prompt:
+
+I’m planning to build a full-stack web application called StudyRoom, which will allow students to create and join virtual study rooms, chat in real time, and collaborate.
+
+The tech stack is:
+
+Frontend: React + Vite + Tailwind CSS
+
+Backend: Node.js + Express.js + Socket.io
+
+Database: MySQL (using mysql2 or Sequelize)
+
+Auth: JWT-based authentication
+
+I want you to explain the approach to starting this project as a professional software engineer — not to write all the code for me.
+
+Specifically, I want a step-by-step breakdown that covers:
+
+Project structure and folder layout
+
+Should I keep frontend and backend in the same repository?
+
+How should files and directories be organized for scalability?
+
+Environment setup
+
+What dependencies need to be installed for each layer?
+
+How do I safely handle environment variables for local vs production (using .env)?
+
+How should I connect Node/Express to a MySQL database securely?
+
+Backend architecture
+
+What are the key modules or layers I should implement (routes, controllers, models, middleware)?
+
+How should I design REST endpoints for user authentication, room creation/joining, and chat messages?
+
+How should real-time chat be integrated with Socket.io in this context?
+
+Frontend architecture
+
+What are the essential React components and pages I’ll need?
+
+How should I organize the frontend to connect with the backend (Axios, Context API, etc.)?
+
+How do I structure UI state for rooms, chat messages, and authentication?
+
+Communication between frontend and backend
+
+How do I set up CORS and environment variables for API URLs?
+
+What’s the recommended local development flow to run both servers together (e.g., concurrently)?
+
+Database design
+
+What tables and relationships make sense for users, rooms, and messages?
+
+Should I manage schema manually with SQL, or use an ORM like Sequelize or Prisma?
+
+Professional workflow practices
+
+How do professionals handle Git version control and .gitignore setup in full-stack repos?
+
+What kind of README documentation should accompany a project like this?
+
+How should I prepare the project for deployment later (Render, Vercel, Railway, etc.)?
+
+In your response, focus on reasoning, structure, and setup steps, not full code implementation.
+
+I want to understand how everything should be done and in what order, like a senior engineer would plan before writing any code.
+
+Please present the answer in clear sections and chronological order.
