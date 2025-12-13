@@ -137,4 +137,4 @@ const getCurrentUser = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getCurrentUser };
+export { register, login, getCurrentUser };
