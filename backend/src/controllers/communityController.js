@@ -85,3 +85,41 @@ exports.createCommunity = async (req, res) => {
         client.release();
     }
 };
+
+// Get all communities a user is currently a member of
+exports.getUserCommunities = async (req, res) => {
+    const userId = req.user.userId;
+
+    try {
+        const result = await pool.query(
+            `SELECT
+                c.id,
+                c.name,
+                c.description,
+                c.owner_id,
+                c.invite_code,
+                c.created_at,
+                u.username as owner_username,
+                cm.role as user_role,
+                (SELECT COUNT(*) FROM community_members WHERE community_id = c.id) as member_count
+            FROM communities c
+            INNER JOIN community_members cm ON c.id = cm.community_id
+            INNER JOIN users u ON c.owner_id = u.id
+            WHERE cm.user_id = $1
+            ORDER BY c.created_at DESC`,
+            [userId]
+        );
+
+        res.json({
+            success: true,
+            communities: result.rows
+        });
+    } catch (error) {
+        console.error('Get user communities error:', error)
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch communities',
+            error: error.message
+        });
+    }
+};
