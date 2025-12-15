@@ -1,4 +1,4 @@
-import pool from '../config/database';
+import pool from '../config/database.js';
 import crypto from 'crypto';
 
 const generateInviteCode = () => {
@@ -7,10 +7,10 @@ const generateInviteCode = () => {
 }
 
 // Create a new community
-exports.createCommunity = async (req, res) => {
+const createCommunity = async (req, res) => {
     const { name, description } = req.body;
     // req.user comes from authenticateToken middleware
-    const ownerId = req.user.userId;
+    const ownerId = req.user.id;
 
     // Check Fields
     if (!name || name.trim() === '') {
@@ -87,8 +87,8 @@ exports.createCommunity = async (req, res) => {
 };
 
 // Get all communities a user is currently a member of
-exports.getUserCommunities = async (req, res) => {
-    const userId = req.user.userId;
+const getUserCommunities = async (req, res) => {
+    const userId = req.user.id;
 
     try {
         const result = await pool.query(
@@ -109,7 +109,7 @@ exports.getUserCommunities = async (req, res) => {
             ORDER BY c.created_at DESC`,
             [userId]
         );
-
+        console.log(result.rows.length);
         res.json({
             success: true,
             communities: result.rows
@@ -125,9 +125,9 @@ exports.getUserCommunities = async (req, res) => {
 };
 
 // Get details for a specific community
-exports.getCommunityDetails = async (req, res) => {
+const getCommunityDetails = async (req, res) => {
     const { communityId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     try {
         const memberCheck = await pool.query(
@@ -189,3 +189,11 @@ exports.getCommunityDetails = async (req, res) => {
         });
     }
 };
+
+const communityController = {
+    createCommunity,
+    getUserCommunities,
+    getCommunityDetails
+};
+
+export default communityController;
