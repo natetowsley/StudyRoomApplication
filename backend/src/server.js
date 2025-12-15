@@ -3,6 +3,7 @@ import cors from 'cors';
 import 'dotenv/config';
 
 import authRoutes from './routes/auth.js';
+import communityRoutes from './routes/communities.js'
 
 const app = express();
 const PORT = process.env.PORT;
@@ -13,6 +14,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/communities', communityRoutes);
 
 // Test route
 app.get('/api/health', (req, res) => {
