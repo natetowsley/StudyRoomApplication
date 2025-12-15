@@ -130,12 +130,14 @@ const getCommunityDetails = async (req, res) => {
     const userId = req.user.id;
 
     try {
+        // Check if user is member of community
         const memberCheck = await pool.query(
             `SELECT role FROM community_members
             WHERE community_id = $1 and user_id = $2`,
             [communityId, userId]
         );
     
+        // Return status 403 if user not a member of community
         if (memberCheck.rows.length === 0) {
             return res.status(403).json({
                 success: false,
@@ -155,6 +157,7 @@ const getCommunityDetails = async (req, res) => {
             [communityId]
         );
 
+        // Return status 404 if community not found
         if (communityResult.rows.length === 0) {
             return res.status(404).json({
                 success: false,
@@ -174,6 +177,7 @@ const getCommunityDetails = async (req, res) => {
             [communityId]
         );
 
+        // Return success
         res.json({
             success: true,
             community: communityResult.rows[0],
@@ -189,6 +193,105 @@ const getCommunityDetails = async (req, res) => {
         });
     }
 };
+
+const joinCommunity = async (req, res) => {
+    // Retrieve invite code from body
+    const { inviteCode } = req.body;
+    const userId = req.user.id;
+
+    // Check for valid invite code
+    if (!inviteCode || inviteCode.trim() === '') {
+        return res.status(400).json({
+            success: false,
+            message: 'Invite Code is required'
+        });
+    }
+
+    try {
+        // Retrieve community that invite code belongs to
+       const communityResult = await pool.query(
+            `SELECT id, name, description, owner_id, invite_code
+            FROM communities 
+            WHERE invite_code = $1`,
+            [inviteCode.trim()]
+        );
+
+        // Return status 404 if no community found
+        if (communityResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Invalid invite code'
+            });
+        }
+
+        const community = communityResult.rows[0];
+
+        // Check if user is already a member
+        const memberCheck = await pool.query(
+            `SELECT id
+            FROM community_members
+            WHERE community_id = $1 AND user_id = $2`,
+            [community.id, userId]
+        );
+
+        // Return status 400 if already a member
+        if (memberCheck.rows.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'You are already a member of this community'
+            });
+        }
+
+        const memberCountResult = await pool.query(
+            `SELECT COUNT(*) as count FROM community_members
+            WHERE community_id = $1`,
+            [community.id]
+        );
+
+        const currentMemberCount = parseInt(memberCountResult.rows[0].count);
+
+        /*TODO*************************************
+         *     10 MEMBER LIMIT PER COMMUNITY      *
+         *      IS TO BE CHANGED (MVP ONLY)       *
+         ******************************************/
+        if (currentMemberCount >= 10) {
+            return res.status(400).json({
+                success: false,
+                message: "This community is full (maximum 10 members)"
+            });
+        }
+
+        // Add user as member
+        const addMember = await pool.query(
+            `INSERT INTO community_members (community_id, user_id, role)
+            VALUES ($1, $2, $3)`,
+            [community.id, userId, 'member']
+        );
+
+        // Return success
+        res.status(200).json({
+            success: true,
+            message: 'Successfully joined community',
+            community: {
+                id: community.id,
+                name: community.name,
+                description: community.description,
+                ownerId: community.owner_id,
+                inviteCode: community.invite_code
+            }
+        });
+
+    } catch (error) {
+        console.error('Join community error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to join community',
+            error: error.message
+        });
+    }
+
+    
+}
 
 const communityController = {
     createCommunity,
