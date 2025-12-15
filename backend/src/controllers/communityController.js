@@ -123,3 +123,69 @@ exports.getUserCommunities = async (req, res) => {
         });
     }
 };
+
+// Get details for a specific community
+exports.getCommunityDetails = async (req, res) => {
+    const { communityId } = req.params;
+    const userId = req.user.userId;
+
+    try {
+        const memberCheck = await pool.query(
+            `SELECT role FROM community_members
+            WHERE community_id = $1 and user_id = $2`,
+            [communityId, userId]
+        );
+    
+        if (memberCheck.rows.length === 0) {
+            return res.status(403).json({
+                success: false,
+                message: 'You are not a member of this community'
+            });
+        }
+
+        // Get community info
+        const communityResult = await pool.query(
+            `SELECT 
+                c.*,
+                u.username as owner_username,
+                (SELECT COUNT(*) FROM community_members WHERE community_id = c.id) as member_count
+            FROM communities c
+            INNER JOIN users u ON c.owner_id = u.id
+            WHERE c.id = $1`,
+            [communityId]
+        );
+
+        if (communityResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Community not found'
+            });
+        }
+
+        // Get all channels in said community
+        const channelsResult = await pool.query(
+            `SELECT id, name, type, created_at
+            FROM channels
+            WHERE community_id = $1
+            ORDER BY 
+                CASE WHEN name = 'general' THEN 0 ELSE 1 END,
+                type ASC,
+                created_at ASC`, // general channel first, text before voice, older channels first
+            [communityId]
+        );
+
+        res.json({
+            success: true,
+            community: communityResult.rows[0],
+            channels: channelsResult.rows,
+            userRole: memberCheck.rows[0].role
+        });
+    } catch (error) {
+        console.error('Get community details error: ', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch community details',
+            error: error.message
+        });
+    }
+};
