@@ -313,10 +313,10 @@ const createChannel = async (req,res) => {
         });
     }
 
-// Name is all lower case for text channels, custom case for voice
-const sanitizedName = type === 'text'
-    ? name.trim().toLowerCase()
-    : name.trim();
+    // Name is all lower case for text channels, custom case for voice
+    const sanitizedName = type === 'text'
+        ? name.trim().toLowerCase()
+        : name.trim();
 
     try {
         const ownerCheck = await pool.query(
@@ -377,6 +377,76 @@ const sanitizedName = type === 'text'
         res.status(500).json({
             success: false,
             message: 'Failed to create channel',
+            error: error.message
+        });
+    }
+};
+
+const deleteChannel = async (req, res) => {
+    const { communityId, channelId } = req.params;
+    const userId = req.user.id;
+
+    try {
+        // Verify that user is owner of channel
+        const ownerCheck = await pool.query(
+            `SELECT owner_id FROM communities WHERE id = $1`,
+            [communityId]
+        );
+
+        if (ownerCheck.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Community not found'
+            });
+        }
+
+        if (ownerCheck.rows[0].owner_id !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only the community owner can delete channels'
+            });
+        }
+
+        // Check if channel exists and retrieve name
+        const channelCheck = await pool.query(
+            `SELECT name FROM channels WHERE id = $1 AND community_id = $2`,
+            [channelId, communityId]
+        );
+
+        if (channelCheck.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Channel not found'
+            });
+        }
+
+        const channelName = channelCheck.rows[0].name;
+
+        // Prevent deleting default channels
+        if (channelName.toLowerCase() === 'general' ||
+            channelName.toLowerCase() === 'general voice') {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot delete default channels'
+            });
+        }
+
+        // Delete the channel
+        await pool.query(
+            `DELETE FROM channels WHERE id = $1 AND community_id = $2`,
+            [channelId, communityId]
+        );
+
+        // Return success
+        res.json({
+            success: true,
+            message: 'Channel deleted successfully'
+        })
+    } catch (error) {
+        console.error('Delete channel error: ', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete channel',
             error: error.message
         });
     }
