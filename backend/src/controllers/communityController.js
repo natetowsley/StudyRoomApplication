@@ -109,7 +109,6 @@ const getUserCommunities = async (req, res) => {
             ORDER BY c.created_at DESC`,
             [userId]
         );
-        console.log(result.rows.length);
         res.json({
             success: true,
             communities: result.rows
@@ -136,7 +135,7 @@ const getCommunityDetails = async (req, res) => {
             WHERE community_id = $1 and user_id = $2`,
             [communityId, userId]
         );
-    
+
         // Return status 403 if user not a member of community
         if (memberCheck.rows.length === 0) {
             return res.status(403).json({
@@ -210,7 +209,7 @@ const joinCommunity = async (req, res) => {
 
     try {
         // Retrieve community that invite code belongs to
-       const communityResult = await pool.query(
+        const communityResult = await pool.query(
             `SELECT id, name, description, owner_id, invite_code
             FROM communities 
             WHERE invite_code = $1`,
@@ -292,7 +291,7 @@ const joinCommunity = async (req, res) => {
     }
 };
 
-const createChannel = async (req,res) => {
+const createChannel = async (req, res) => {
     const { communityId } = req.params;
     const { name, type } = req.body;
     const userId = req.user.id;
@@ -306,7 +305,7 @@ const createChannel = async (req,res) => {
     }
 
     // Validate channel type
-    if (type !== 'text' || type !== 'voice') {
+    if (type !== 'text' && type !== 'voice') {
         return res.status(400).json({
             success: false,
             message: 'Channel type must be "text" or "voice"'
@@ -354,6 +353,18 @@ const createChannel = async (req,res) => {
             return res.status(400).json({
                 success: false,
                 message: 'Maximum 10 channels allowed per community'
+            });
+        }
+
+        const duplicateCheck = await pool.query(
+            `SELECT id FROM channels WHERE community_id = $1 AND LOWER(name) = LOWER($2)`,
+            [communityId, sanitizedName]
+        );
+
+        if (duplicateCheck.rows.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'A channel with this name already exists'
             });
         }
 
@@ -494,7 +505,11 @@ const leaveCommunity = async (req, res) => {
 const communityController = {
     createCommunity,
     getUserCommunities,
-    getCommunityDetails
+    getCommunityDetails,
+    joinCommunity,
+    createChannel,
+    deleteChannel,
+    leaveCommunity
 };
 
 export default communityController;
