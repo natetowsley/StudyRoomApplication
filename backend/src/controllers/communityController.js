@@ -4,7 +4,7 @@ import crypto from 'crypto';
 const generateInviteCode = () => {
     // cryptographically strong data through crypto.randomBytes()
     return crypto.randomBytes(6).toString('hex');
-}
+};
 
 // Create a new community
 const createCommunity = async (req, res) => {
@@ -194,6 +194,7 @@ const getCommunityDetails = async (req, res) => {
     }
 };
 
+// User using an invite link
 const joinCommunity = async (req, res) => {
     // Retrieve invite code from body
     const { inviteCode } = req.body;
@@ -289,9 +290,97 @@ const joinCommunity = async (req, res) => {
             error: error.message
         });
     }
+};
 
-    
-}
+const createChannel = async (req,res) => {
+    const { communityId } = req.params;
+    const { name, type } = req.body;
+    const userId = req.user.id;
+
+    // Validate channel name parameter
+    if (!name || name.trim() === '') {
+        return res.status(400).json({
+            success: false,
+            message: 'Channel name is required'
+        });
+    }
+
+    // Validate channel type
+    if (type !== 'text' || type !== 'voice') {
+        return res.status(400).json({
+            success: false,
+            message: 'Channel type must be "text" or "voice"'
+        });
+    }
+
+// Name is all lower case for text channels, custom case for voice
+const sanitizedName = type === 'text'
+    ? name.trim().toLowerCase()
+    : name.trim();
+
+    try {
+        const ownerCheck = await pool.query(
+            `SELECT owner_id FROM communities WHERE id = $1`,
+            [communityId]
+        );
+
+        if (ownerCheck.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Community not found'
+            });
+        }
+
+        /*TODO*************************************
+        *    ALLOW PERMITTED ROLES TO CREATE     *
+        *     CHANNELS (OWNER ONLY FOR MVP)      *
+        ******************************************/
+        if (ownerCheck.rows[0].owner_id !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Only the community owner can create channels'
+            });
+        }
+
+        // Get current number of channels in community
+        const channelCountResult = await pool.query(
+            `SELECT COUNT(*) as count FROM channels WHERE community_id = $1`,
+            [communityId]
+        );
+
+        const currentChannelCount = parseInt(channelCountResult.rows[0].count);
+
+        if (currentChannelCount >= 10) {
+            return res.status(400).json({
+                success: false,
+                message: 'Maximum 10 channels allowed per community'
+            });
+        }
+
+        // Create channel
+        const result = await pool.query(
+            `INSERT INTO channels (community_id, name, type)
+            VALUES ($1, $2, $3)
+            RETURNING id, community_id, name, type, created_at`,
+            [communityId, sanitizedName, type]
+        );
+
+        // Return success
+        res.status(201).json({
+            success: true,
+            message: 'Channel created successfully',
+            channel: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Create channel error: ', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create channel',
+            error: error.message
+        });
+    }
+};
 
 const communityController = {
     createCommunity,
