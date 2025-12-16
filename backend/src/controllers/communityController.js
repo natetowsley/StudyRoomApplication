@@ -452,6 +452,45 @@ const deleteChannel = async (req, res) => {
     }
 };
 
+const leaveCommunity = async (req, res) => {
+    const { communityId } = req.params;
+    const userId = req.user.id;
+
+    try {
+        // Check if user is a member
+        const memberCheck = await pool.query(
+            `SELECT id FROM community_members WHERE community_id = $1 AND user_id = $2`,
+            [communityId, userId]
+        );
+
+        if (memberCheck.rows.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'You are not a member of this community'
+            });
+        }
+
+        // Remove from community
+        await pool.query(
+            `DELETE FROM community_members WHERE community_id = $1 AND user_id = $2`,
+            [communityId, userId]
+        );
+
+        // Return success
+        res.json({
+            success: true,
+            message: 'Successfully left community'
+        });
+    } catch (error) {
+        console.error('Leave community error: ', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to leave community',
+            error: error.message
+        });
+    }
+};
+
 const communityController = {
     createCommunity,
     getUserCommunities,
