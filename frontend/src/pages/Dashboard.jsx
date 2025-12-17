@@ -1,8 +1,12 @@
 import { useState } from 'react'
-import CommunityList from '@/components/community/CommunityList';
+import CommunityList from '@/components/community/CommunityList'
+import CreateCommunityDialog from '@/components/community/CreateCommunityDialog'
 
 export default function Dashboard() {
   const [selectedCommunityId, setSelectedCommunityId] = useState(null)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  // Track communities here too
+  const [communities, setCommunities] = useState([])
 
   const handleSelectCommunity = (communityId) => {
     console.log('Selected community:', communityId)
@@ -10,45 +14,62 @@ export default function Dashboard() {
   }
 
   const handleCreateCommunity = () => {
-    console.log('Create community clicked')
-    // TODO: Open create community modal
+    setIsCreateDialogOpen(true)
+  }
+
+  // Handle successfull community creation
+  const handleCommunityCreated = (newCommunity) => {
+    console.log('Community created:', newCommunity)
+
+    // Add community to local list
+    setCommunities(prev => [...prev, newCommunity])
+
+    // Auto select new community
+    setSelectedCommunityId(newCommunity.id)
   }
 
   return (
-    <div className="flex h-screen w-full bg-gray-900">
-      {/* LEFT SIDEBAR: Community List */}
-      <CommunityList
-        selectedCommunityId={selectedCommunityId}
-        onSelectCommunity={handleSelectCommunity}
-        onCreateCommunity={handleCreateCommunity}
+    <>
+      <div className="flex h-screen w-full bg-gray-900">
+        {/* LEFT SIDEBAR: Community List */}
+        <CommunityList
+          selectedCommunityId={selectedCommunityId}
+          onSelectCommunity={handleSelectCommunity}
+          onCreateCommunity={handleCreateCommunity}
+        />
+
+        {/* MIDDLE SIDEBAR: Channel List (Placeholder) */}
+        <div className="w-60 bg-gray-800 flex flex-col">
+          <div className="h-12 border-b border-gray-700 flex items-center px-4">
+            <h2 className="font-semibold text-white">
+              {selectedCommunityId ? 'Community Selected' : 'Select a Community'}
+            </h2>
+          </div>
+          <div className="flex-1 p-4">
+            <p className="text-gray-400 text-sm">
+              {selectedCommunityId
+                ? `Viewing community ID: ${selectedCommunityId}`
+                : 'Click a community to view channels'}
+            </p>
+          </div>
+        </div>
+
+        {/* MAIN CONTENT AREA (Placeholder) */}
+        <div className="flex-1 flex flex-col">
+          <div className="h-12 bg-gray-800 border-b border-gray-700 flex items-center px-4">
+            <h1 className="text-white font-semibold"># general</h1>
+          </div>
+          <div className="flex-1 p-4">
+            <p className="text-gray-400">Main content area - messages will appear here</p>
+          </div>
+        </div>
+      </div>
+
+      <CreateCommunityDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onCommunityCreated={handleCommunityCreated}
       />
-
-      {/* MIDDLE SIDEBAR: Channel List (Placeholder) */}
-      <div className="w-60 bg-gray-800 flex flex-col">
-        <div className="h-12 border-b border-gray-700 flex items-center px-4">
-          <h2 className="font-semibold text-white">
-            {selectedCommunityId ? 'Community Selected' : 'Select a Community'}
-          </h2>
-        </div>
-        <div className="flex-1 p-4">
-          <p className="text-gray-400 text-sm">
-            {selectedCommunityId
-              ? `Viewing community ID: ${selectedCommunityId}`
-              : 'Click a community to view channels'}
-          </p>
-        </div>
-      </div>
-
-      {/* MAIN CONTENT AREA (Placeholder) */}
-      <div className="flex-1 flex flex-col">
-        <div className="h-12 bg-gray-800 border-b border-gray-700 flex items-center px-4">
-          <h1 className="text-white font-semibold"># general</h1>
-        </div>
-        <div className="flex-1 p-4">
-          <p className="text-gray-400">Main content area - messages will appear here</p>
-        </div>
-      </div>
-    </div>
-
+    </>
   )
 }
