@@ -1,53 +1,54 @@
-import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react'
+import CommunityList from '@/components/community/CommunityList';
 
-function Dashboard() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+export default function Dashboard() {
+  const [selectedCommunityId, setSelectedCommunityId] = useState(null)
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const handleSelectCommunity = (communityId) => {
+    console.log('Selected community:', communityId)
+    setSelectedCommunityId(communityId)
+  }
+
+  const handleCreateCommunity = () => {
+    console.log('Create community clicked')
+    // TODO: Open create community modal
+  }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-            >
-              Logout
-            </button>
-          </div>
+    <div className="flex h-screen w-full bg-gray-900">
+      {/* LEFT SIDEBAR: Community List */}
+      <CommunityList
+        selectedCommunityId={selectedCommunityId}
+        onSelectCommunity={handleSelectCommunity}
+        onCreateCommunity={handleCreateCommunity}
+      />
 
-          <div className="text-gray-300">
-            <p className="text-xl mb-4">Welcome, {user?.username}!</p>
-            <div className="space-y-2">
-              <p><strong>Email:</strong> {user?.email}</p>
-              {user?.learningContext && (
-                <p><strong>Learning Context:</strong> {user.learningContext}</p>
-              )}
-              {user?.major && (
-                <p><strong>Major:</strong> {user.major}</p>
-              )}
-            </div>
+      {/* MIDDLE SIDEBAR: Channel List (Placeholder) */}
+      <div className="w-60 bg-gray-800 flex flex-col">
+        <div className="h-12 border-b border-gray-700 flex items-center px-4">
+          <h2 className="font-semibold text-white">
+            {selectedCommunityId ? 'Community Selected' : 'Select a Community'}
+          </h2>
+        </div>
+        <div className="flex-1 p-4">
+          <p className="text-gray-400 text-sm">
+            {selectedCommunityId
+              ? `Viewing community ID: ${selectedCommunityId}`
+              : 'Click a community to view channels'}
+          </p>
+        </div>
+      </div>
 
-            <div className="mt-6 p-4 bg-gray-700 rounded">
-              <p className="text-sm">
-                You're logged in. This is a placeholder dashboard.
-                <br />
-                Week 2 will add community and channel features here.
-              </p>
-            </div>
-          </div>
+      {/* MAIN CONTENT AREA (Placeholder) */}
+      <div className="flex-1 flex flex-col">
+        <div className="h-12 bg-gray-800 border-b border-gray-700 flex items-center px-4">
+          <h1 className="text-white font-semibold"># general</h1>
+        </div>
+        <div className="flex-1 p-4">
+          <p className="text-gray-400">Main content area - messages will appear here</p>
         </div>
       </div>
     </div>
-  );
-}
 
-export default Dashboard;
+  )
+}
