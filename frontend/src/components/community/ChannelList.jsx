@@ -3,9 +3,10 @@ import { useEffect, useState } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
-import { Hash, Volume2, UserPlus } from 'lucide-react'
+import { Hash, Volume2, UserPlus, Plus } from 'lucide-react'
 import axios from '../../api/axios'
 import CommunityInviteDialog from './CommunityInviteDialog'
+import CreateChannelDialog from './CreateChannelDialog'
 
 // Channel List displays channels for selected community
 export default function ChannelList({
@@ -15,9 +16,11 @@ export default function ChannelList({
 }) {
     const [community, setCommunity] = useState(null)
     const [channels, setChannels] = useState([])
+    const [userRole, setUserRole] = useState(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState(null)
     const [showInviteDialog, setShowInviteDialog] = useState(false)
+    const [showCreateChannelDialog, setShowCreateChannelDialog] = useState(false)
 
     // When community id changes, fetch channels
     useEffect(() => {
@@ -39,6 +42,7 @@ export default function ChannelList({
             if (response.data.success) {
                 setCommunity(response.data.community)
                 setChannels(response.data.channels)
+                setUserRole(response.data.userRole)
 
                 // Auto select first channel if none selected
                 if (response.data.channels.length > 0 && !selectedChannelId) {
@@ -53,9 +57,16 @@ export default function ChannelList({
         }
     }
 
+    const handleChannelCreated = (newChannel) => {
+        setChannels(prev => [...prev, newChannel])
+        onSelectChannel(newChannel)
+    }
+
     // Separate channels by type for grouped display (text, voice)
     const textChannels = channels.filter(ch => ch.type === 'text')
     const voiceChannels = channels.filter(ch => ch.type === 'voice')
+
+    const isOwner = userRole === 'owner'
 
     // Empty state (no community selected)
     if (!communityId) {
@@ -125,10 +136,22 @@ export default function ChannelList({
                         {/* Text Channels Section */}
                         {textChannels.length > 0 && (
                             <>
-                                <div className="px-2 py-1">
+                                <div className="flex px-2 py-1">
                                     <h3 className="text-xs font-semibold text-gray-400 uppercase">
                                         Text Channels
                                     </h3>
+                                    {/* Add channel button (owner only)*/}
+                                    {isOwner && (
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={() => setShowCreateChannelDialog(true)}
+                                            className="ml-auto h-4 w-4 p-0 text-gray-400 hover:text-white"
+                                            title="Create Channel"
+                                        >
+                                            <Plus className="h-4 w-4"/>
+                                        </Button>
+                                    )}
                                 </div>
                                 {textChannels.map(channel => (
                                     <ChannelItem
@@ -177,12 +200,22 @@ export default function ChannelList({
                 </ScrollArea>
             </div>
 
-            {/* Invite Dialog - NEW */}
+            {/* Invite Dialog */}
             {community && (
                 <CommunityInviteDialog
                     open={showInviteDialog}
                     onOpenChange={setShowInviteDialog}
                     inviteCode={community.invite_code}
+                />
+            )}
+
+            {/* Create Channel Dialog */}
+            {isOwner && (
+                <CreateChannelDialog
+                    open={showCreateChannelDialog}
+                    onOpenChange={setShowCreateChannelDialog}
+                    communityId={communityId}
+                    onChannelCreated={handleChannelCreated}
                 />
             )}
         </>
