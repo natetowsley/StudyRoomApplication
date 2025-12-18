@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import ComponentPlayground from './playground/ComponentPlayground'
 import { AuthProvider } from './contexts/AuthContext'
 import Login from './components/auth/Login'
 import Register from './components/auth/Register'
@@ -40,6 +41,8 @@ function App() {
 
           {/* 404 - catch all */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
+          <Route path="/playground" element={<ComponentPlayground />} />
         </Routes>
       </AuthProvider>
     </Router>
