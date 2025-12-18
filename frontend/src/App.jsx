@@ -24,8 +24,18 @@ function App() {
               </ProtectedRoute>
             }
           />
-          
+
           {/* Join community route (protected)*/}
+          <Route
+            path="/join/:inviteCode"
+            element={
+              <ProtectedRoute>
+                <JoinCommunity />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Default redirect */}
           <Route path="/" element={<Navigate to="/login" replace />} />
 
           {/* 404 - catch all */}
