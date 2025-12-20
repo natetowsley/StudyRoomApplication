@@ -502,6 +502,56 @@ const leaveCommunity = async (req, res) => {
     }
 };
 
+const fetchMessages = async (req, res) => {
+    try {
+        const { communityId, channelId } = req.params;
+        const userId = req.user.id;
+
+        // Verify user is member of community
+        const memberCheck = await pool.query(
+            `SELECT id FROM community_members
+            WHERE community_id = $1 AND user_id = $2`,
+            [communityId, userId]
+        );
+
+        if (memberCheck.rows.length === 0) {
+            return res.status(403).json({ error: 'Not a member of this community' });
+        }
+
+        // Verify channel belongs to this community
+        const channelCheck = await pool.query(
+            `SELECT id FROM channels WHERE id = $1 AND community_id = $2`,
+            [channelId, communityId]
+        );
+
+        if (channelCheck.rows.length === 0) {
+            return res.status(404).json({ error: 'Channel not found' });
+        }
+
+        // Fetch last 100 messages
+        const result = await db.query(
+            `SELECT 
+                m.id,
+                m.content,
+                m.created_at,
+                u.id as user_id,
+                u.username
+            FROM messages m
+            JOIN users u ON u.id = m.user_id
+            WHERE m.channel_id = $1
+            ORDER BY m.created_at DESC
+            LIMIT 100`,
+            [channelId]
+        );
+
+        const messages = result.rows.reverse();
+        res.json(messages);
+    } catch (error) {
+        console.error('Error fetching messages: ', error);
+        res.status(500).json({ error: 'Failed to fetch messages' });
+    }
+};
+
 const communityController = {
     createCommunity,
     getUserCommunities,
@@ -509,7 +559,8 @@ const communityController = {
     joinCommunity,
     createChannel,
     deleteChannel,
-    leaveCommunity
+    leaveCommunity,
+    fetchMessages
 };
 
 export default communityController;

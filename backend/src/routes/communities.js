@@ -19,4 +19,6 @@ router.delete('/:communityId/leave', communityController.leaveCommunity);
 router.post('/:communityId/channels', communityController.createChannel);
 router.delete('/:communityId/channels/:channelId', communityController.deleteChannel);
 
+// Message routes
+router.get('/:communityId/channels/:channelId/messages', communityController.fetchMessages);
 export default router;
