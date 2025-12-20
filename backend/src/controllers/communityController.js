@@ -529,7 +529,7 @@ const fetchMessages = async (req, res) => {
         }
 
         // Fetch last 100 messages
-        const result = await db.query(
+        const result = await pool.query(
             `SELECT 
                 m.id,
                 m.content,
